@@ -44,6 +44,24 @@ class RunController extends OCSController {
 	}
 
 	/**
+	 * Parse a datetime string in ISO 8601 format
+	 *
+	 * @param string $value The datetime string to parse
+	 * @param string $fieldName The name of the field for error messages
+	 * @return DateTime|DataResponse The parsed DateTime or an error DataResponse
+	 */
+	private function parseDateTime(string $value, string $fieldName): DateTime|DataResponse {
+		$dateTime = DateTime::createFromFormat(DateTime::ATOM, $value);
+		if ($dateTime === false) {
+			return new DataResponse(
+				['error' => "Invalid $fieldName datetime format. Use ISO 8601."],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+		return $dateTime;
+	}
+
+	/**
 	 * Get all runs
 	 *
 	 * @param int|null $releaseId Optional release ID filter
@@ -124,25 +142,19 @@ class RunController extends OCSController {
 		$run->setReleaseId($releaseId);
 
 		if ($start !== null) {
-			$startDateTime = DateTime::createFromFormat(DateTime::ATOM, $start);
-			if ($startDateTime === false) {
-				return new DataResponse(
-					['error' => 'Invalid start datetime format. Use ISO 8601.'],
-					Http::STATUS_BAD_REQUEST
-				);
+			$startResult = $this->parseDateTime($start, 'start');
+			if ($startResult instanceof DataResponse) {
+				return $startResult;
 			}
-			$run->setStart($startDateTime);
+			$run->setStart($startResult);
 		}
 
 		if ($end !== null) {
-			$endDateTime = DateTime::createFromFormat(DateTime::ATOM, $end);
-			if ($endDateTime === false) {
-				return new DataResponse(
-					['error' => 'Invalid end datetime format. Use ISO 8601.'],
-					Http::STATUS_BAD_REQUEST
-				);
+			$endResult = $this->parseDateTime($end, 'end');
+			if ($endResult instanceof DataResponse) {
+				return $endResult;
 			}
-			$run->setEnd($endDateTime);
+			$run->setEnd($endResult);
 		}
 
 		$run = $this->runMapper->insert($run);
@@ -178,25 +190,19 @@ class RunController extends OCSController {
 			$run->setName($name);
 
 			if ($start !== null) {
-				$startDateTime = DateTime::createFromFormat(DateTime::ATOM, $start);
-				if ($startDateTime === false) {
-					return new DataResponse(
-						['error' => 'Invalid start datetime format. Use ISO 8601.'],
-						Http::STATUS_BAD_REQUEST
-					);
+				$startResult = $this->parseDateTime($start, 'start');
+				if ($startResult instanceof DataResponse) {
+					return $startResult;
 				}
-				$run->setStart($startDateTime);
+				$run->setStart($startResult);
 			}
 
 			if ($end !== null) {
-				$endDateTime = DateTime::createFromFormat(DateTime::ATOM, $end);
-				if ($endDateTime === false) {
-					return new DataResponse(
-						['error' => 'Invalid end datetime format. Use ISO 8601.'],
-						Http::STATUS_BAD_REQUEST
-					);
+				$endResult = $this->parseDateTime($end, 'end');
+				if ($endResult instanceof DataResponse) {
+					return $endResult;
 				}
-				$run->setEnd($endDateTime);
+				$run->setEnd($endResult);
 			}
 
 			$run = $this->runMapper->update($run);
